@@ -3,17 +3,6 @@
 TodoApi é uma aplicação web simples escrita em Go utilizando o framework Gin. Esta aplicação demonstra como criar uma API RESTful com conexão a um banco de dados SQL Server e como organizar o código em diferentes pacotes para melhor manutenção e escalabilidade.
 
 ## Estrutura do Projeto
-
-ChatGPT
-Claro! Aqui está um exemplo de um README.md bem formatado e detalhado para o seu projeto Go. Esse arquivo deve ser colocado na raiz do seu projeto.
-
-markdown
-Copiar código
-# MyApp
-
-MyApp é uma aplicação web simples escrita em Go utilizando o framework Gin. Esta aplicação demonstra como criar uma API RESTful com conexão a um banco de dados SQL Server e como organizar o código em diferentes pacotes para melhor manutenção e escalabilidade.
-
-## Estrutura do Projeto
 ```go
 todo-api/
 ├── api/
