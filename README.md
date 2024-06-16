@@ -7,23 +7,25 @@ TodoApi é uma aplicação web simples escrita em Go utilizando o framework Gin.
 todo-api/
 ├── api/
 │ └── v1/
-│ └── todo.go
+│  └── todo.go
 ├── cmd/
 │ └── main.go
 ├── configs/
 │ └── config.go
 ├── internal/
-│ ├── controllers/
-│ │ └── todo_controller.go
-│ ├── models/
-│ │ └── todo.go
-│ ├── services/
-│ │ └── todo_service.go
-│ └── database/
-│ └── database.go
+│   ├── controllers/
+│   │   └── todo_controller.go
+│   ├── models/
+│   │   └── todo.go
+│   ├── repositories/
+│   │   └── todo_repository.go
+│   ├── services/
+│   │   └── todo_service.go
+│   └── database/
+│       └── database.go
 ├── pkg/
 │ └── logger/
-│ └── logger.go
+│  └── logger.go
 ├── go.mod
 ├── go.sum
 └── README.md
@@ -82,6 +84,7 @@ A pasta `internal` contém a lógica de negócio do aplicativo. Esta pasta é di
 - **models**: Definições de modelos de dados e migrações.
 - **services**: Lógica de negócios.
 - **database**: Configuração e inicialização da conexão com o banco de dados.
+- **repositories**: Comunicação com o banco o banco de dados
 
 ### Pkg
 
@@ -108,7 +111,7 @@ logger.Fatal("This is a fatal message", "key", "value")
 - **PUT /todo/:id**: Atualiza um todo pelo ID.
 - **DELETE /todo/:id**: Deleta um todo pelo ID.
 
-*Exemplo de Request e Response*
+## Exemplo de Request e Response
 **GET /todos**
 Response:
 ```go
@@ -141,6 +144,26 @@ Response:
     "id": 3,
     "task": "Walk the dog",
     "completed": false
+}
+```
+
+## Injeção de Dependências e Interfaces
+
+Este projeto utiliza interfaces e injeção de dependências para melhorar a modularidade e a testabilidade. A estrutura do projeto foi organizada para seguir este padrão.
+
+### Interfaces
+
+As interfaces para repositórios e serviços estão localizadas na pasta `internal/repositories` e `internal/services`.
+
+#### Exemplo de Interface de Repositório
+
+```go
+type TodoRepository interface {
+    GetAll() ([]models.Todo, error)
+    GetByID(id uint) (*models.Todo, error)
+    Create(todo *models.Todo) error
+    Update(todo *models.Todo) error
+    Delete(id uint) error
 }
 ```
 ## Contribuindo
