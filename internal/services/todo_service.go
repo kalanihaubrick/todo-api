@@ -3,43 +3,55 @@ package services
 import (
 	"errors"
 
-	"github.com/kalanihaubrick/todo-api/internal/database"
 	"github.com/kalanihaubrick/todo-api/internal/models"
+	"github.com/kalanihaubrick/todo-api/internal/repositories"
 )
 
-func GetAllTodos() ([]models.Todo, error) {
-	var todos []models.Todo
-	result := database.DB.Find(&todos)
-	return todos, result.Error
+type TodoService interface {
+	GetAllTodos() ([]models.Todo, error)
+	GetTodoById(id uint) (*models.Todo, error)
+	CreateTodo(todo *models.Todo) error
+	UpdateTodo(todo *models.Todo) error
+	DeleteTodo(id uint) error
 }
 
-func GetTodoByID(id uint) (models.Todo, error) {
-	var todo models.Todo
-	result := database.DB.First(&todo, id)
-	return todo, result.Error
+type todoService struct {
+	repo repositories.TodoRepository
 }
 
-func CreateTodo(todo models.Todo) error {
-	var existingTodo models.Todo
-	if err := database.DB.Where("task = ?", todo.Task).First(&existingTodo).Error; err == nil {
-		return errors.New("a task with the same description already exists")
+func NewTodoService(repo repositories.TodoRepository) TodoService {
+	return &todoService{repo}
+}
+
+func (s *todoService) GetAllTodos() ([]models.Todo, error) {
+	return s.repo.GetAll()
+}
+
+func (s *todoService) GetTodoById(id uint) (*models.Todo, error) {
+	return s.repo.GetById(id)
+}
+
+func (s *todoService) CreateTodo(todo *models.Todo) error {
+
+	if err := s.repo.FindDescription(todo.Task); err == nil {
+		return errors.New("a todo with the same description already exists")
 	}
-	return database.DB.Create(&todo).Error
+
+	return s.repo.Create(todo)
 }
 
-func UpdateTodo(todo models.Todo) error {
-	var existingTodo models.Todo
-	if err := database.DB.Where("task = ?", todo.Task).First(&existingTodo).Error; err == nil {
-		return errors.New("a task with the same description already exists")
+func (s *todoService) UpdateTodo(todo *models.Todo) error {
+	_, err := s.GetTodoById(todo.ID)
+	if err != nil {
+		return err
 	}
-	return database.DB.Save(&todo).Error
+
+	if err := s.repo.FindDescription(todo.Task); err == nil {
+		return errors.New("a todo with the same description already exists")
+	}
+	return s.repo.Update(todo)
 }
 
-func DeleteTodo(id uint) error {
-	var todo models.Todo
-	result := database.DB.First(&todo, id)
-	if result.Error != nil {
-		return result.Error
-	}
-	return database.DB.Delete(&todo).Error
+func (s *todoService) DeleteTodo(id uint) error {
+	return s.repo.Delete(id)
 }

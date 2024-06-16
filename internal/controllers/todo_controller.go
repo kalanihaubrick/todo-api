@@ -1,75 +1,101 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/kalanihaubrick/todo-api/internal/models"
+	"strconv"
 
+	"github.com/gin-gonic/gin"
+
+	"github.com/kalanihaubrick/todo-api/internal/models"
 	"github.com/kalanihaubrick/todo-api/internal/services"
 
 	"net/http"
-	"strconv"
 )
 
-func GetTodos(c *gin.Context) {
-	todos, err := services.GetAllTodos()
+type TodoController struct {
+	service services.TodoService
+}
 
+func NewTodoController(service services.TodoService) *TodoController {
+	return &TodoController{service}
+}
+
+func (c *TodoController) GetAllTodos(ctx *gin.Context) {
+	todos, err := c.service.GetAllTodos()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, todos)
+	ctx.JSON(http.StatusOK, todos)
 }
 
-func GetTodoById(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-
-	todo, err := services.GetTodoByID(uint(id))
-
+func (c *TodoController) GetTodoById(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Todo not found"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
 		return
 	}
 
-	c.JSON(http.StatusOK, todo)
+	todo, err := c.service.GetTodoById(uint(id))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, todo)
 }
 
-func CreateTodo(c *gin.Context) {
+func (c *TodoController) CreateTodo(ctx *gin.Context) {
 	var todo models.Todo
-	if err := c.ShouldBindJSON(&todo); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := ctx.ShouldBindJSON(&todo); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := services.CreateTodo(todo); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	if err := c.service.CreateTodo(&todo); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, todo)
+
+	ctx.JSON(http.StatusCreated, todo)
 }
 
-func UpdateTodo(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	todo, err := services.GetTodoByID(uint(id))
+func (c *TodoController) UpdateTodo(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Todo not found"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+	}
+
+	var todo models.Todo
+	if err := ctx.ShouldBindJSON(&todo); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := c.ShouldBindJSON(&todo); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	todo.ID = uint(id)
+
+	if err := c.service.UpdateTodo(&todo); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := services.UpdateTodo(todo); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, todo)
+
+	ctx.JSON(http.StatusOK, gin.H{"sucess:": todo})
 }
 
-func DeleteTodo(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	if err := services.DeleteTodo(uint(id)); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Todo not found"})
+func (c *TodoController) DeleteTodo(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Todo deleted"})
+
+	if err := c.service.DeleteTodo(uint(id)); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
 }

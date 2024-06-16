@@ -3,15 +3,23 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kalanihaubrick/todo-api/internal/controllers"
+	"github.com/kalanihaubrick/todo-api/internal/database"
+	"github.com/kalanihaubrick/todo-api/internal/repositories"
+	"github.com/kalanihaubrick/todo-api/internal/services"
 )
 
 func RegisterRoutes(r *gin.Engine) {
-	v1 := r.Group("api/v1")
+	db := database.DB
+	repo := repositories.NewTodoRepository(db)
+	service := services.NewTodoService(repo)
+	controller := controllers.NewTodoController(service)
+
+	todoRoutes := r.Group("api/v1/todos")
 	{
-		v1.GET("/todos", controllers.GetTodos)
-		v1.GET("/todo/:id", controllers.GetTodoById)
-		v1.POST("/todos", controllers.CreateTodo)
-		v1.PUT("/todo/:id", controllers.UpdateTodo)
-		v1.DELETE("/todo/:id", controllers.DeleteTodo)
+		todoRoutes.GET("", controller.GetAllTodos)
+		todoRoutes.POST("", controller.CreateTodo)
+		todoRoutes.GET("/:id", controller.GetTodoById)
+		todoRoutes.PUT("/:id", controller.UpdateTodo)
+		todoRoutes.DELETE("/:id", controller.DeleteTodo)
 	}
 }
